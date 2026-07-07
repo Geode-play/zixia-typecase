@@ -1,105 +1,114 @@
 import type { CanvasSettings } from "../types";
-import { canvasPresets } from "../lib/canvas/presets";
+import type { AppCopy } from "../i18n";
+import { canvasPresetGroups, canvasPresets, formatCanvasPreset } from "../lib/canvas/presets";
 import { isTransparentColor } from "../lib/shared/text";
+import { WiredCheckbox, WiredInput, WiredSelect, type WiredSelectOption } from "./wired/WiredElements";
 
 type CanvasControlsProps = {
+  copy: AppCopy["canvasControls"];
   settings: CanvasSettings;
   onChange: (settings: CanvasSettings) => void;
+  showTitle?: boolean;
 };
 
-export function CanvasControls({ settings, onChange }: CanvasControlsProps) {
+export function CanvasControls({ copy, settings, onChange, showTitle = true }: CanvasControlsProps) {
   const isTransparent = isTransparentColor(settings.backgroundColor);
   const colorPickerValue = isHexColor(settings.backgroundColor) ? settings.backgroundColor : "#ffffff";
-  const groupedPresets = Object.entries(
-    canvasPresets.reduce<Record<string, typeof canvasPresets>>((groups, preset) => {
-      groups[preset.group] = [...(groups[preset.group] ?? []), preset];
-      return groups;
-    }, {}),
+  const presetOptions = createPresetOptions(copy.choosePresetSize);
+  const selectedPreset = canvasPresets.find(
+    (preset) => preset.width === settings.width && preset.height === settings.height,
   );
 
   return (
     <div className="control-group">
-      <div className="control-group__title">画布</div>
+      {showTitle ? <div className="control-group__title">{copy.title}</div> : null}
       <label className="field">
-        <span>常用尺寸</span>
-        <select
-          value=""
-          onChange={(event) => {
-            const preset = canvasPresets.find((item) => item.id === event.target.value);
+        <span>{copy.presetSize}</span>
+        <WiredSelect
+          ariaLabel={copy.presetSize}
+          className="wired-field-control"
+          options={presetOptions}
+          placeholder={copy.choosePresetSize}
+          value={selectedPreset?.id ?? ""}
+          onValueChange={(value) => {
+            const preset = canvasPresets.find((item) => item.id === value);
 
             if (preset) {
               onChange({ ...settings, width: preset.width, height: preset.height });
             }
           }}
-        >
-          <option value="">选择预设尺寸</option>
-          {groupedPresets.map(([group, presets]) => (
-            <optgroup key={group} label={group}>
-              {presets.map((preset) => (
-                <option key={preset.id} value={preset.id}>
-                  {preset.label} · {preset.width}×{preset.height}
-                  {preset.note ? ` · ${preset.note}` : ""}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
+        />
       </label>
       <div className="grid-two">
         <label className="field">
-          <span>宽度</span>
-          <input
+          <span>{copy.width}</span>
+          <WiredInput
             min="1"
             type="number"
             value={settings.width}
-            onChange={(event) =>
-              onChange({ ...settings, width: toPositiveInteger(event.target.value, 1080) })
+            onValueChange={(value) =>
+              onChange({ ...settings, width: toPositiveInteger(value, 1080) })
             }
           />
         </label>
         <label className="field">
-          <span>高度</span>
-          <input
+          <span>{copy.height}</span>
+          <WiredInput
             min="1"
             type="number"
             value={settings.height}
-            onChange={(event) =>
-              onChange({ ...settings, height: toPositiveInteger(event.target.value, 1440) })
+            onValueChange={(value) =>
+              onChange({ ...settings, height: toPositiveInteger(value, 1440) })
             }
           />
         </label>
       </div>
       <label className="toggle-field">
-        <input
+        <WiredCheckbox
           checked={isTransparent}
-          type="checkbox"
-          onChange={(event) =>
+          onCheckedChange={(checked) =>
             onChange({
               ...settings,
-              backgroundColor: event.target.checked ? "transparent" : "#ffffff",
+              backgroundColor: checked ? "transparent" : "#ffffff",
             })
           }
         />
-        <span>透明背景</span>
+        <span>{copy.transparentBackground}</span>
       </label>
       <label className="field field--color">
-        <span>背景色</span>
+        <span>{copy.background}</span>
         <input
-          disabled={isTransparent}
           type="color"
           value={colorPickerValue}
           onChange={(event) => onChange({ ...settings, backgroundColor: event.target.value })}
         />
-        <input
+        <WiredInput
           type="text"
           value={settings.backgroundColor}
-          onChange={(event) =>
-            onChange({ ...settings, backgroundColor: normalizeBackgroundColor(event.target.value) })
+          onValueChange={(value) =>
+            onChange({ ...settings, backgroundColor: normalizeBackgroundColor(value) })
           }
         />
       </label>
     </div>
   );
+}
+
+function createPresetOptions(emptyLabel: string): WiredSelectOption[] {
+  return [
+    { label: emptyLabel, value: "" },
+    ...canvasPresetGroups.flatMap((group) =>
+      [
+        { disabled: true, label: group, value: `group-${group}` },
+        ...canvasPresets
+          .filter((preset) => preset.group === group)
+          .map((preset) => ({
+            label: formatCanvasPreset(preset),
+            value: preset.id,
+          })),
+      ],
+    ),
+  ];
 }
 
 function toPositiveInteger(value: string, fallback: number): number {

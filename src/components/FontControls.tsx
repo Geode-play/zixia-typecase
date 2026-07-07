@@ -1,183 +1,375 @@
-import type { BuiltInFontDefinition, FontCategory, UploadedFont } from "../types";
-
-type LoadBuiltInFontOptions = {
-  selectCategory?: FontCategory;
-};
+import { useEffect, useMemo, useRef, useState } from "react";
+import { WiredButton, WiredSelect } from "./wired/WiredElements";
+import type { AppCopy } from "../i18n";
+import type { FontRules, SvgProcessingReport, UploadedFont } from "../types";
 
 type FontControlsProps = {
+  copy: AppCopy["fontControls"];
   fonts: UploadedFont[];
-  builtInFonts: BuiltInFontDefinition[];
-  loadingBuiltInFontId: string;
-  selectedChineseFontFamily: string;
-  selectedEnglishFontFamily: string;
-  onLoadBuiltInFont: (fontId: string, options?: LoadBuiltInFontOptions) => void;
+  fontRules: FontRules;
+  fontStatus: string;
+  isReadingFonts: boolean;
+  isReadingSystemFonts: boolean;
+  systemFontSupported: boolean;
+  textReport?: SvgProcessingReport;
+  onAddFontFiles: (files: File[]) => void;
+  onChangeFontRule: (ruleName: keyof Pick<FontRules, "cjkFontFamily" | "latinFontFamily">, fontFamily: string) => void;
+  onLoadSystemFonts: () => void;
   onRemoveFont: (fontId: string) => void;
-  onSelectChineseFont: (fontFamily: string) => void;
-  onSelectEnglishFont: (fontFamily: string) => void;
+};
+
+type FontOptionGroup = {
+  label: string;
+  options: FontOption[];
 };
 
 type FontOption = {
-  builtInId?: string;
   family: string;
   label: string;
-  loaded: boolean;
+  searchText: string;
 };
 
 export function FontControls({
+  copy,
   fonts,
-  builtInFonts,
-  loadingBuiltInFontId,
-  selectedChineseFontFamily,
-  selectedEnglishFontFamily,
-  onLoadBuiltInFont,
+  fontRules,
+  fontStatus,
+  isReadingFonts,
+  isReadingSystemFonts,
+  systemFontSupported,
+  textReport,
+  onAddFontFiles,
+  onChangeFontRule,
+  onLoadSystemFonts,
   onRemoveFont,
-  onSelectChineseFont,
-  onSelectEnglishFont,
 }: FontControlsProps) {
+  const fontInputRef = useRef<HTMLInputElement | null>(null);
+  const uploadedFonts = fonts.filter((font) => font.kind !== "system");
+  const hasSystemFonts = fonts.some((font) => font.kind === "system");
+  const optionGroups = createFontOptionGroups({
+    copy,
+    fonts,
+    uploadedFonts,
+  });
+
   return (
     <div className="control-group">
-      <div className="control-group__title">当前画布字体</div>
+      <div className="control-group__title">{copy.title}</div>
 
-      <FontSelect
-        builtInFonts={builtInFonts}
-        category="zh"
-        fonts={fonts}
-        loadingBuiltInFontId={loadingBuiltInFontId}
-        selectedFontFamily={selectedChineseFontFamily}
-        title="中文字体"
-        onLoadBuiltInFont={onLoadBuiltInFont}
-        onSelectFont={onSelectChineseFont}
-      />
+      <div className="font-rule-grid">
+        <FontRuleSelect
+          label={copy.cjkFont}
+          keepOriginalLabel={copy.keepOriginal}
+          loadingPlaceholder={copy.loadingPlaceholder}
+          noMatchingFonts={copy.noMatchingFonts}
+          optionGroups={optionGroups}
+          value={fontRules.cjkFontFamily}
+          searchPlaceholder={copy.searchFonts}
+          onChange={(fontFamily) => onChangeFontRule("cjkFontFamily", fontFamily)}
+        />
+        <FontRuleSelect
+          label={copy.latinFont}
+          keepOriginalLabel={copy.keepOriginal}
+          loadingPlaceholder={copy.loadingPlaceholder}
+          noMatchingFonts={copy.noMatchingFonts}
+          optionGroups={optionGroups}
+          value={fontRules.latinFontFamily}
+          searchPlaceholder={copy.searchFonts}
+          onChange={(fontFamily) => onChangeFontRule("latinFontFamily", fontFamily)}
+        />
+      </div>
 
-      <FontSelect
-        builtInFonts={builtInFonts}
-        category="en"
-        fonts={fonts}
-        loadingBuiltInFontId={loadingBuiltInFontId}
-        selectedFontFamily={selectedEnglishFontFamily}
-        title="英文字体"
-        onLoadBuiltInFont={onLoadBuiltInFont}
-        onSelectFont={onSelectEnglishFont}
-      />
+      <div className="local-font-action">
+        <input
+          ref={fontInputRef}
+          accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2"
+          multiple
+          type="file"
+          onChange={(event) => {
+            onAddFontFiles(Array.from(event.target.files ?? []));
+            event.target.value = "";
+          }}
+        />
+        <WiredButton onClick={() => fontInputRef.current?.click()}>
+          {isReadingFonts ? copy.readingFonts : copy.addLocalFonts}
+        </WiredButton>
+      </div>
 
-      <div className="font-manager">
-        <div className="mini-title">已加载字体</div>
-        {fonts.length === 0 ? (
-          <span className="empty-line">还没有加载字体</span>
-        ) : (
-          fonts.map((font) => (
+      <div className="system-font-tools">
+        {!hasSystemFonts ? (
+          <WiredButton disabled={!systemFontSupported || isReadingSystemFonts} onClick={onLoadSystemFonts}>
+            {isReadingSystemFonts ? copy.loadingSystemFonts : copy.loadSystemFonts}
+          </WiredButton>
+        ) : null}
+        {!systemFontSupported ? (
+          <span>
+            {copy.systemFontUnsupported} {copy.systemFontFallback}
+          </span>
+        ) : null}
+        {fontStatus ? <span className="font-status">{fontStatus}</span> : null}
+      </div>
+
+      {textReport ? <TextAnalysis copy={copy} report={textReport} /> : null}
+
+      {uploadedFonts.length > 0 ? (
+        <div className="font-manager">
+          <div className="mini-title">{copy.localFonts}</div>
+          {uploadedFonts.map((font) => (
             <div className="font-row" key={font.id}>
               <span className="font-row__name">{font.name}</span>
-              <span>{font.sourceLabel ?? getFontKindLabel(font)}</span>
-              <button type="button" onClick={() => onRemoveFont(font.id)}>
-                移除
-              </button>
+              <span>{copy.uploadedFont}</span>
+              <WiredButton onClick={() => onRemoveFont(font.id)}>{copy.remove}</WiredButton>
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
 
-type FontSelectProps = {
-  builtInFonts: BuiltInFontDefinition[];
-  category: FontCategory;
-  fonts: UploadedFont[];
-  loadingBuiltInFontId: string;
-  selectedFontFamily: string;
-  title: string;
-  onLoadBuiltInFont: (fontId: string, options?: LoadBuiltInFontOptions) => void;
-  onSelectFont: (fontFamily: string) => void;
-};
-
-function FontSelect({
-  builtInFonts,
-  category,
-  fonts,
-  loadingBuiltInFontId,
-  selectedFontFamily,
-  title,
-  onLoadBuiltInFont,
-  onSelectFont,
-}: FontSelectProps) {
-  const options = createFontOptions(fonts, builtInFonts, category, loadingBuiltInFontId);
+function FontRuleSelect({
+  label,
+  keepOriginalLabel,
+  loadingPlaceholder,
+  noMatchingFonts,
+  optionGroups,
+  searchPlaceholder,
+  value,
+  onChange,
+}: {
+  label: string;
+  keepOriginalLabel: string;
+  loadingPlaceholder: string;
+  noMatchingFonts: string;
+  optionGroups: FontOptionGroup[];
+  searchPlaceholder: string;
+  value: string;
+  onChange: (fontFamily: string) => void;
+}) {
+  const isWaitingForFonts = optionGroups.length === 0;
 
   return (
     <label className="font-select-field">
-      <span>{title}</span>
-      <select
-        value={selectedFontFamily}
-        onChange={(event) => {
-          const fontFamily = event.target.value;
-
-          if (!fontFamily) {
-            onSelectFont("");
-            return;
-          }
-
-          const option = options.find((item) => item.family === fontFamily);
-
-          if (option?.loaded) {
-            onSelectFont(fontFamily);
-            return;
-          }
-
-          if (option?.builtInId) {
-            onLoadBuiltInFont(option.builtInId, { selectCategory: category });
-          }
-        }}
-      >
-        <option value="">保留 SVG 原字体</option>
-        {options.map((option) => (
-          <option key={`${category}-${option.family}`} value={option.family}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      <span>{label}</span>
+      <FontSearchSelect
+        ariaLabel={label}
+        disabled={isWaitingForFonts}
+        keepOriginalLabel={keepOriginalLabel}
+        noResultsLabel={noMatchingFonts}
+        optionGroups={optionGroups}
+        placeholder={isWaitingForFonts ? loadingPlaceholder : keepOriginalLabel}
+        searchPlaceholder={searchPlaceholder}
+        value={value}
+        onChange={onChange}
+      />
     </label>
   );
 }
 
-function createFontOptions(
-  fonts: UploadedFont[],
-  builtInFonts: BuiltInFontDefinition[],
-  category: FontCategory,
-  loadingBuiltInFontId: string,
-): FontOption[] {
-  const loadedOptions: FontOption[] = fonts
-    .filter((font) => !font.category || font.category === category)
-    .map((font) => ({
-      family: font.family,
-      label: `${font.name} · ${font.sourceLabel ?? getFontKindLabel(font)}`,
-      loaded: true,
-    }));
+function FontSearchSelect({
+  ariaLabel,
+  disabled,
+  keepOriginalLabel,
+  noResultsLabel,
+  optionGroups,
+  placeholder,
+  searchPlaceholder,
+  value,
+  onChange,
+}: {
+  ariaLabel: string;
+  disabled: boolean;
+  keepOriginalLabel: string;
+  noResultsLabel: string;
+  optionGroups: FontOptionGroup[];
+  placeholder: string;
+  searchPlaceholder: string;
+  value: string;
+  onChange: (fontFamily: string) => void;
+}) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const normalizedQuery = normalizeFontSearchToken(query.trim());
+  const selectedOption = optionGroups.flatMap((group) => group.options).find((option) => option.family === value);
+  const triggerLabel = selectedOption?.label ?? placeholder;
+  const filteredGroups = useMemo(
+    () =>
+      normalizedQuery
+        ? optionGroups
+            .map((group) => ({
+              ...group,
+              options: group.options.filter((option) => option.searchText.includes(normalizedQuery)),
+            }))
+            .filter((group) => group.options.length > 0)
+        : optionGroups,
+    [normalizedQuery, optionGroups],
+  );
+  const hasResults = filteredGroups.some((group) => group.options.length > 0);
 
-  const builtInOptions: FontOption[] = builtInFonts
-    .filter((font) => font.category === category)
-    .map((font) => {
-      const loaded = fonts.some((item) => item.family === font.family);
-      const status = font.id === loadingBuiltInFontId ? "加载中" : loaded ? "可用" : "点击加载";
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
 
-      return {
-        builtInId: font.id,
-        family: font.family,
-        label: `${font.name} · ${font.language} · ${font.license} · ${status}`,
-        loaded,
-      };
-    });
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      if (!ref.current?.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
 
-  return [...builtInOptions, ...loadedOptions];
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    return () => document.removeEventListener("mousedown", closeOnOutsideClick);
+  }, [isOpen]);
+
+  function selectFont(fontFamily: string) {
+    onChange(fontFamily);
+    setIsOpen(false);
+    setQuery("");
+  }
+
+  return (
+    <div className="font-search-select" ref={ref}>
+      <div onMouseDownCapture={() => setIsOpen((current) => !current)}>
+        <WiredSelect
+          ariaLabel={ariaLabel}
+          className="font-search-select__trigger wired-field-control"
+          disabled={disabled}
+          options={[{ label: triggerLabel, value }]}
+          placeholder={placeholder}
+          value={value}
+          onValueChange={() => undefined}
+        />
+      </div>
+      {isOpen ? (
+        <div className="font-search-select__menu">
+          <input
+            autoFocus
+            className="font-search-select__input"
+            placeholder={searchPlaceholder}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                setIsOpen(false);
+              }
+            }}
+          />
+          {!normalizedQuery ? (
+            <button className="font-search-select__option" type="button" onClick={() => selectFont("")}>
+              {keepOriginalLabel}
+            </button>
+          ) : null}
+          {filteredGroups.map((group) => (
+            <div className="font-search-select__group" key={group.label}>
+              <div className="font-search-select__group-label">{group.label}</div>
+              {group.options.map((option) => (
+                <button
+                  aria-selected={option.family === value ? "true" : undefined}
+                  className={
+                    option.family === value
+                      ? "font-search-select__option is-active"
+                      : "font-search-select__option"
+                  }
+                  key={option.family}
+                  type="button"
+                  onClick={() => selectFont(option.family)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          ))}
+          {!hasResults ? <span className="font-search-select__empty">{noResultsLabel}</span> : null}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
-function getFontKindLabel(font: UploadedFont): string {
-  if (font.kind === "built-in") {
-    return "内置字体";
-  }
+function TextAnalysis({ copy, report }: { copy: AppCopy["fontControls"]; report: SvgProcessingReport }) {
+  return (
+    <div className={report.mixedTextElementCount > 0 ? "text-analysis has-warning" : "text-analysis"}>
+      <span>
+        {copy.textAnalysis(
+          report.textElementCount,
+          report.pureCjkTextElementCount,
+          report.pureLatinTextElementCount,
+          report.mixedTextElementCount,
+          report.emptyTextElementCount,
+        )}
+      </span>
+      {report.textElementCount === 0 ? (
+        <strong>{copy.noEditableText}</strong>
+      ) : null}
+      {report.mixedTextElementCount > 0 ? <strong>{copy.mixedTextDetected}</strong> : null}
+    </div>
+  );
+}
 
-  if (font.kind === "remote") {
-    return "远程字体";
-  }
+function createFontOptionGroups({
+  copy,
+  fonts,
+  uploadedFonts,
+}: {
+  copy: AppCopy["fontControls"];
+  fonts: UploadedFont[];
+  uploadedFonts: UploadedFont[];
+}): FontOptionGroup[] {
+  const groups: FontOptionGroup[] = [];
+  const usedFamilies = new Set<string>();
+  const systemFonts = fonts
+    .filter((font) => font.kind === "system")
+    .sort(sortFontsByName);
 
-  return "上传字体";
+  addGroup(groups, copy.uploadedFonts, uploadedFonts.sort(sortFontsByName), usedFamilies);
+  addGroup(groups, copy.systemFonts, systemFonts, usedFamilies);
+
+  return groups;
+}
+
+function addGroup(
+  groups: FontOptionGroup[],
+  label: string,
+  fonts: UploadedFont[],
+  usedFamilies: Set<string>,
+): void {
+  const options = fonts
+    .filter((font) => {
+      if (usedFamilies.has(font.family)) {
+        return false;
+      }
+
+      usedFamilies.add(font.family);
+      return true;
+    })
+    .map((font) => ({
+      family: font.family,
+      label: font.name,
+      searchText: createFontSearchText([
+        font.name,
+        font.family,
+        font.systemFont?.fullName ?? "",
+        font.systemFont?.postscriptName ?? "",
+        font.systemFont?.style ?? "",
+      ]),
+    }));
+
+  if (options.length > 0) {
+    groups.push({ label, options });
+  }
+}
+
+function sortFontsByName(first: UploadedFont, second: UploadedFont) {
+  return first.name.localeCompare(second.name);
+}
+
+function createFontSearchText(fields: string[]): string {
+  const rawText = fields.join(" ").toLowerCase();
+
+  return `${rawText} ${normalizeFontSearchToken(rawText)}`;
+}
+
+function normalizeFontSearchToken(value: string): string {
+  return value.toLowerCase().replace(/[\s\-_.,/\\()]+/g, "");
 }

@@ -1,0 +1,20 @@
+<svg width="620" height="150" viewBox="0 0 620 150" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">字匣 / ZIXIA TYPECASE</title>
+  <desc id="desc">字匣项目名称，中英文居中显示。</desc>
+  <style>
+
+  @font-face {
+    font-family: "TekitouPoemReadme";
+    src: url("../../src/assets/fonts/tekitou-poem.ttf") format("truetype");
+  }
+
+    text {
+      font-family: "TekitouPoemReadme", "Comic Sans MS", sans-serif;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      letter-spacing: 0;
+    }
+  </style>
+  <text x="310" y="58" fill="#2f302b" font-size="64">字匣</text>
+  <text x="310" y="113" fill="#5f6258" font-size="30">ZIXIA · TYPECASE</text>
+</svg>

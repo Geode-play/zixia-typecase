@@ -1,11 +1,13 @@
+import { X } from "lucide-react";
+import { WiredButton, WiredSelect, type WiredSelectOption } from "./wired/WiredElements";
+import type { AppCopy } from "../i18n";
 import type { CanvasVersion, UploadedFont } from "../types";
 
 type CanvasVersionControlsProps = {
   activeCanvasId: string;
   canvases: CanvasVersion[];
+  copy: AppCopy["canvasVersion"];
   fonts: UploadedFont[];
-  onAddCanvas: () => void;
-  onDuplicateCanvas: (canvasId: string) => void;
   onRemoveCanvas: (canvasId: string) => void;
   onSelectCanvas: (canvasId: string) => void;
 };
@@ -13,78 +15,65 @@ type CanvasVersionControlsProps = {
 export function CanvasVersionControls({
   activeCanvasId,
   canvases,
+  copy,
   fonts,
-  onAddCanvas,
-  onDuplicateCanvas,
   onRemoveCanvas,
   onSelectCanvas,
 }: CanvasVersionControlsProps) {
+  const canRemoveCanvas = canvases.length > 1;
+  const canvasOptions: WiredSelectOption[] = canvases.map((canvas) => ({
+    label: canvas.name,
+    meta: formatCanvasMeta(canvas, fonts, copy.originalFont),
+    value: canvas.id,
+  }));
+
   return (
     <div className="control-group">
-      <div className="control-group__title">画布版本</div>
-      <button className="secondary-action" type="button" onClick={onAddCanvas}>
-        添加画布
-      </button>
-      <div className="canvas-version-list" aria-live="polite">
-        {canvases.map((canvas) => (
-          <div
-            className={
-              canvas.id === activeCanvasId
-                ? "canvas-version-row is-active"
-                : "canvas-version-row"
-            }
-            key={canvas.id}
-            role="button"
-            tabIndex={0}
-            onClick={() => onSelectCanvas(canvas.id)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                onSelectCanvas(canvas.id);
-              }
-            }}
-          >
-            <div className="canvas-version-row__info">
-              <strong>{canvas.name}</strong>
-              <span>
-                中：{getFontName(fonts, canvas.selectedChineseFontFamily)} / 英：
-                {getFontName(fonts, canvas.selectedEnglishFontFamily)}
-              </span>
-              <small>
-                {canvas.settings.width}×{canvas.settings.height} · {canvas.settings.backgroundColor}
-              </small>
-            </div>
-            <div className="canvas-version-row__actions">
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onDuplicateCanvas(canvas.id);
-                }}
-              >
-                复制
-              </button>
-              <button
-                disabled={canvases.length <= 1}
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onRemoveCanvas(canvas.id);
-                }}
-              >
-                删除
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+      <div className="control-group__title">{copy.title}</div>
+      <label className="canvas-select">
+        <span className="canvas-select__label">{copy.currentCanvas}</span>
+        <div className="canvas-select__row">
+          <WiredSelect
+            ariaLabel={copy.currentCanvas}
+            className="wired-field-control"
+            options={canvasOptions}
+            placeholder={copy.currentCanvasFallback}
+            value={activeCanvasId}
+            onValueChange={onSelectCanvas}
+          />
+          {canRemoveCanvas ? (
+            <WiredButton
+              ariaLabel={copy.deleteCanvas(canvases.find((canvas) => canvas.id === activeCanvasId)?.name ?? "")}
+              className="canvas-select__remove canvas-select__remove-current"
+              title={copy.deleteCanvasTitle}
+              onClick={(event) => {
+                event.stopPropagation();
+                onRemoveCanvas(activeCanvasId);
+              }}
+            >
+              <X size={13} />
+            </WiredButton>
+          ) : null}
+        </div>
+      </label>
     </div>
   );
 }
 
-function getFontName(fonts: UploadedFont[], fontFamily: string): string {
+function formatCanvasMeta(canvas: CanvasVersion, fonts: UploadedFont[], originalFontLabel: string): string {
+  return `${canvas.settings.width}x${canvas.settings.height} / ${getFontName(
+    fonts,
+    canvas.fontRules?.cjkFontFamily ||
+      canvas.fontRules?.latinFontFamily ||
+      canvas.selectedFontFamily ||
+      "",
+    originalFontLabel,
+  )}`;
+}
+
+function getFontName(fonts: UploadedFont[], fontFamily: string, originalFontLabel: string): string {
   if (!fontFamily) {
-    return "原字体";
+    return originalFontLabel;
   }
 
   return fonts.find((font) => font.family === fontFamily)?.name ?? fontFamily;

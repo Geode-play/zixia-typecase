@@ -1,21 +1,94 @@
 {
   "name": "svg-font-switcher",
   "version": "0.1.0",
+  "description": "A local-first SVG font switching and export tool.",
   "private": true,
+  "license": "MIT",
+  "author": "GEODE",
   "type": "module",
+  "main": "electron/main.cjs",
   "scripts": {
     "dev": "vite",
+    "check:ui-font": "node scripts/check-ui-font-coverage.js",
+    "docs:screenshots": "node scripts/capture-readme-screenshots.mjs",
     "build": "tsc -b && vite build",
+    "desktop:dev": "npm run build && electron .",
+    "desktop:pack": "npm run build && electron-builder --mac dir --universal",
+    "desktop:dmg": "npm run build && electron-builder --mac dmg --universal",
+    "desktop:win": "npm run build && electron-builder --win nsis zip",
+    "desktop:release": "npm run build && electron-builder --mac dmg --universal && electron-builder --win nsis zip --x64",
     "preview": "vite preview"
   },
+  "build": {
+    "appId": "com.geode.zixia",
+    "productName": "字匣",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "build/icons/**/*",
+      "dist/**/*",
+      "electron/**/*",
+      "package.json",
+      "src/assets/brand/logo.png"
+    ],
+    "mac": {
+      "category": "public.app-category.graphics-design",
+      "icon": "build/icons/icon.icns",
+      "identity": null,
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
+      ]
+    },
+    "dmg": {
+      "artifactName": "ZIXIA-${version}-mac.${ext}"
+    },
+    "win": {
+      "artifactName": "ZIXIA-${version}-win-portable.${ext}",
+      "icon": "build/icons/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "artifactName": "ZIXIA-${version}-win.${ext}",
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "字匣"
+    }
+  },
   "dependencies": {
+    "lucide-react": "^1.18.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "roughjs": "^4.6.6",
+    "wired-elements": "^3.0.0-rc.6"
   },
   "devDependencies": {
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.0.0",
+    "electron": "^43.0.0",
+    "electron-builder": "^26.15.3",
     "typescript": "^5.9.0",
     "vite": "^7.0.0"
   }

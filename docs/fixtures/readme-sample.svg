@@ -1,0 +1,95 @@
+<svg width="480" height="640" viewBox="0 0 480 640" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&amp;display=swap');
+      text {
+        font-family: "KingHwa_OldSong", "Noto Serif SC", "STSong", serif;
+      }
+      .title { font-size: 20px; font-weight: bold; fill: #1c1c1c; }
+      .subtitle { font-size: 10px; font-family: "Courier New", monospace; fill: #5a5a5a; letter-spacing: 1px; }
+      .body-text { font-size: 13px; fill: #2c2c2c; }
+      .small-text { font-size: 11px; fill: #666666; }
+      .mono-tag { font-family: "Courier New", monospace; font-size: 10px; fill: #4a5c54; }
+      
+      .bg { fill: #f5f4f0; } /* Muji style cream */
+      .border-line { stroke: #2a2a2a; stroke-width: 1.5; fill: none; }
+      .divider { stroke: #d0cdc5; stroke-width: 1; stroke-dasharray: 2 2; }
+      
+      .box-bg { fill: #ebe9e1; stroke: #d0cdc5; stroke-width: 1; }
+      .item-bg { fill: #dfddd3; }
+      
+      .icon-stroke { stroke: #2a2a2a; stroke-width: 1.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+      .accent-fill-1 { fill: #8a9686; opacity: 0.8; } /* Low sat green */
+      .accent-fill-2 { fill: #a48e7f; opacity: 0.8; } /* Low sat brown */
+    </style>
+  </defs>
+
+  <!-- Background -->
+  <rect width="100%" height="100%" class="bg" />
+  
+  <!-- Outer Border (30px margin) -->
+  <rect x="30" y="30" width="420" height="580" class="border-line" />
+
+  <!-- Header Section -->
+  <text x="50" y="70" class="title">让AI看见判断发生</text>
+  <text x="50" y="88" class="subtitle">PERSONAL JUDGMENT ARCHIVE</text>
+
+  <!-- User Input Summary -->
+  <text x="50" y="125" class="body-text">直觉是高压缩的隐性判断。人机协作的核心不仅是</text>
+  <text x="50" y="145" class="body-text">收集偏好，而是将“感觉不对”拆解为可复用的样本。</text>
+
+  <!-- Divider 1 -->
+  <line x1="50" y1="165" x2="430" y2="165" class="border-line" stroke-width="1" />
+
+  <!-- Main Visual: Lightning vs Mountain -->
+  <text x="130" y="200" class="body-text" text-anchor="middle" font-weight="bold">Lightning Bolt</text>
+  <text x="130" y="218" class="small-text" text-anchor="middle">在已知领域间接通</text>
+  
+  <!-- Loose Hand-drawn Lightning Bolt -->
+  <path d="M135 235 L120 255 L132 258 L118 285 L145 252 L128 250 Z" class="icon-stroke accent-fill-2" />
+
+  <line x1="240" y1="185" x2="240" y2="295" class="divider" />
+
+  <text x="350" y="200" class="body-text" text-anchor="middle" font-weight="bold">Mountain Building</text>
+  <text x="350" y="218" class="small-text" text-anchor="middle">创造新定义的框架</text>
+  
+  <!-- Loose Hand-drawn Mountain -->
+  <path d="M350 235 L315 285 L385 282 Z" class="icon-stroke" />
+  <path d="M348 252 L332 284 L378 282 Z" class="icon-stroke accent-fill-1" />
+
+  <!-- Main Visual: The Archive Extraction -->
+  <rect x="50" y="325" width="380" height="205" class="box-bg" />
+  
+  <text x="70" y="352" class="body-text" font-weight="bold">核心工作流：逆向提取判断</text>
+  <text x="70" y="370" class="small-text">在重要协作结束时，将直觉解压缩为以下档案：</text>
+
+  <!-- Extracted Questions -->
+  <rect x="70" y="385" width="340" height="22" class="item-bg" />
+  <text x="80" y="400" class="body-text">1. 我否定了什么？</text>
+  
+  <rect x="70" y="412" width="340" height="22" class="item-bg" />
+  <text x="80" y="427" class="body-text">2. 为什么否定？<tspan class="small-text"> (拆解定位/表达/受众等深层原因)</tspan></text>
+  
+  <rect x="70" y="439" width="340" height="22" class="item-bg" />
+  <text x="80" y="454" class="body-text">3. 在 AI 提供的平行可能中，我保留了什么？</text>
+  
+  <rect x="70" y="466" width="340" height="22" class="item-bg" />
+  <text x="80" y="481" class="body-text">4. 我真正关心的问题本质是什么？</text>
+  
+  <rect x="70" y="493" width="340" height="22" class="item-bg" />
+  <text x="80" y="508" class="body-text">5. 下次类似任务，应该避免什么误判？</text>
+
+  <!-- Bottom Concept -->
+  <text x="240" y="555" class="small-text" text-anchor="middle">
+    AI 提供平行展开的可能 
+    <tspan class="body-text"> ✕ </tspan> 
+    人类通过策展与判断产生价值
+  </text>
+
+  <!-- Divider 2 -->
+  <line x1="50" y1="575" x2="430" y2="575" class="border-line" stroke-width="1" />
+
+  <!-- Footer -->
+  <text x="50" y="595" class="subtitle">SVG GRAPHIC ARTIST</text>
+  <text x="430" y="595" class="subtitle" text-anchor="end">GEODE 2026 · V0.4</text>
+</svg>

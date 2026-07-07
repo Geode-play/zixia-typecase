@@ -28,7 +28,7 @@ export async function createUploadedFonts(files: File[]): Promise<UploadedFont[]
         dataUrl,
         format,
         kind: "uploaded",
-        sourceLabel: "上传字体",
+        sourceLabel: "上傳字体",
       };
     }),
   );
@@ -91,7 +91,7 @@ function createFontFamily(fileName: string, index: number): string {
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onerror = () => reject(new Error(`无法读取字体文件：${file.name}`));
+    reader.onerror = () => reject(new Error(`无法讀取字体文件：${file.name}`));
     reader.onload = () => resolve(String(reader.result));
     reader.readAsDataURL(file);
   });

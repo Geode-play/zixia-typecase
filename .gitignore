@@ -1,7 +1,43 @@
+# Dependencies
 node_modules/
-dist/
 .npm-cache/
+
+# Environment and local config
+.env
+.env.*
+!.env.example
+*.local
+.DS_Store
+.idea/
+.vscode/
+
+# Logs and temporary files
+*.log
+.tmp/
+.vite/
 .vite-dev*.log
 *.tsbuildinfo
+
+# Build output
+dist/
+release/
+test-results/
+coverage/
+playwright-report/
+.playwright-mcp/
+
+# Generated TypeScript output from local builds
 vite.config.js
 vite.config.d.ts
+
+# Electron icon source folders generated during packaging
+build/*.iconset/
+
+# Local font copy; the licensed font used by the app lives in src/assets/fonts/
+TekitouPoem.ttf
+
+# Temporary visual test files
+multi-svg-current-100.png
+multi-svg-fixed-100.png
+scoped-svg-mixed-import.png
+project.html
