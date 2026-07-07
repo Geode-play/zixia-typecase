@@ -27,7 +27,7 @@ jobs:
         run: npm ci
 
       - name: Build macOS DMG
-        run: npm run desktop:dmg
+        run: npm run desktop:dmg -- --publish never
 
       - name: Upload macOS installer artifact
         uses: actions/upload-artifact@v4
@@ -53,7 +53,7 @@ jobs:
         run: npm ci
 
       - name: Build Windows installer and portable zip
-        run: npm run desktop:win
+        run: npm run desktop:win -- --publish never
 
       - name: Upload Windows installer artifacts
         uses: actions/upload-artifact@v4
