@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "A local-first SVG font switching and export tool.",
   "private": true,
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "author": "GEODE",
   "type": "module",
   "main": "electron/main.cjs",
