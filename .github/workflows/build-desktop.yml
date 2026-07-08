@@ -1,5 +1,6 @@
 name: Build desktop apps
 
+# Keep this workflow indexed after repository rebuilds.
 on:
   workflow_dispatch:
   push:
